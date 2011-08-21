@@ -33,10 +33,11 @@ class AllCombMapSM(object):
     def interpret(self, nproc=1):
         """Use interpreter to do calculations."""
 
-        def proxy_func(func, space, pipe):
+        def proxy_func(func, space, pipe, args):
             """Func is applied for each item in space, and returned via pipe."""
             output = []
             for x in space:
+                x = x + args
                 output.append(func(*x))
             pipe.send(output)
 
@@ -50,6 +51,7 @@ class AllCombMapSM(object):
         print "Length of iteration space: %d" % len(iter_space)
         print "Each of %d procs will do %d" % (nproc, each_space_len)
         print "Master will do %d extra" % leftover_len
+        print "Additional args: %s" % str(self.tree.args)
 
         from multiprocessing import Process, Pipe
         pipes = []
@@ -61,11 +63,12 @@ class AllCombMapSM(object):
             pipes.append(parent_conn)
             space = iter_space[x*each_space_len:(x+1)*each_space_len]
             print "Spawning process to do %s" % str(space)
-            processes.append(Process(target=proxy_func, args=(self.tree.func, space, child_conn)))
+            processes.append(Process(target=proxy_func, args=(self.tree.func, space, child_conn, self.tree.args)))
             processes[x].start()
 
         # do local work
         for x in iter_space[(nproc-1)*each_space_len:]:
+            x = x + self.tree.args
             output.append(self.tree.func(*x))
 
         # get back work done from children & terminate them

@@ -29,6 +29,7 @@ class SMTests(unittest.TestCase):
     def test_interpreting_complicated_SM(self):
         def foo(x,y):
             return x+y
+        
         sm = AllCombMapSM([[1,2,3,4],[1,2,3,4]], foo).run()
         ret = sm.interpret(nproc=3)
         
@@ -38,6 +39,20 @@ class SMTests(unittest.TestCase):
         answer.sort()
 
         self.assertEqual(ret, answer)
+
+    def test_with_extra_args(self):
+        def foo(x,y):
+            return x+y
+        sm = AllCombMapSM([[1,2,3,4]], foo, 3).run()
+        ret = sm.interpret(nproc=1)
+
+        answer = map(lambda x: x+3, [1,2,3,4])
+        answer.sort()
+        ret.sort()
+
+        self.assertEqual(ret, answer)
+        
+        
 
 if __name__ == '__main__':
     unittest.main()
