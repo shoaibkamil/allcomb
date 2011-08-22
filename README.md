@@ -18,7 +18,10 @@ where
 - `lists` is a list of lists
 - `func` is a side-effect free function that returns something
 - `args` is the rest of arguments to pass to `func`
-- `nproc` is optional argument that tells the specializer how many processes to use
+- `nproc` is optional argument that tells the specializer how many
+  processes to use.  If not specified, the specializer will try to
+  detect the number of available cores.
+  
 
 The function signature for `func` must be such that it takes in `a+b`
 arguments, where `a` is the number of lists, and `b` is the number of 
@@ -33,7 +36,7 @@ Example:
     def add(x,y):
       return x+y
     
-    result = AllCombMap([[1,2,3],[3,4,5]], add).interpret()
+    result = AllCombMap([[1,2,3],[3,4,5]], add).execute()
    
 `result` will be the list `[4,5,6,5,6,7,6,7,8]` in some (possibly
 sorted, possibly not) order.
