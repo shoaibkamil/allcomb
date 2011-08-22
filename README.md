@@ -27,6 +27,7 @@ that contains one item for each member in the cartesian product of
 `lists`, and that item is the result of applying `func`.
 
 Example:
+
     from allcombmap import *
     
     def add(x,y):
