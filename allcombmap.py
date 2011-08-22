@@ -6,6 +6,29 @@ import asp
 import asp.codegen.python_ast as py_ast
 import asp.codegen.ast_tools as ast_tools
 
+class AllCombMap(object):
+    """
+    User-visible class for AllCombMap specializer.
+    Usage: AllCombMap(lists, func, ...).execute()
+    """
+    def __init__(self, lists, func, *args):
+        if lists != [] and not isinstance(lists[0], list):
+            raise asp.SpecializationError("lists argument must be a list of lists or empty.")
+        
+        self.sm = AllCombMapSM(lists, func, *args)
+        self.nproc = None
+
+    def execute(self, nproc=None):
+        """Execute the map.  If nproc is not passed in, detect it."""
+        if self.nproc == None and nproc == None:
+            try:
+                import asp.config
+                nproc = asp.config.PlatformDetector().get_cpu_info()['numCores']
+            except:
+                nproc = 2
+        self.nproc = self.nproc or nproc
+        return self.sm.interpret(nproc=nproc)
+
 # Semantic Model
 class IterSpaceNode(object):
     """SM node that tracks the iteration space and function."""
@@ -72,10 +95,18 @@ class AllCombMapSM(object):
             output.append(self.tree.func(*x))
 
         # get back work done from children & terminate them
-        for x in xrange(nproc-1):
-            output.extend(pipes[x].recv())
-            processes[x].join()
-        
+        # use Python's select() support to do it as procs finish
+        import select
+        finished_procs = 0
+        while finished_procs < nproc-1:
+            # wait for some of the pipes to be ready to read
+            ready_list, _, _ = select.select(pipes, [], [])
+
+            for x in ready_list:
+                output.extend(x.recv())
+                # join() on the corresponding proc
+                processes[pipes.index(x)].join()
+                finished_procs += 1
 
         return output
             
