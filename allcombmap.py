@@ -5,6 +5,7 @@
 import asp
 import asp.codegen.python_ast as py_ast
 import asp.codegen.ast_tools as ast_tools
+from asp.util import *
 
 class AllCombMap(object):
     """
@@ -71,10 +72,10 @@ class AllCombMapSM(object):
         each_space_len = len(iter_space)/nproc
         leftover_len = len(iter_space)-(each_space_len*nproc)
 
-        print "Length of iteration space: %d" % len(iter_space)
-        print "Each of %d procs will do %d" % (nproc, each_space_len)
-        print "Master will do %d extra" % leftover_len
-        print "Additional args: %s" % str(self.tree.args)
+        debug_print("Length of iteration space: %d" % len(iter_space))
+        debug_print("Each of %d procs will do %d" % (nproc, each_space_len))
+        debug_print("Master will do %d extra" % leftover_len)
+        debug_print("Additional args: %s" % str(self.tree.args))
 
         from multiprocessing import Process, Pipe
         pipes = []
@@ -85,7 +86,7 @@ class AllCombMapSM(object):
             child_conn, parent_conn = Pipe()
             pipes.append(parent_conn)
             space = iter_space[x*each_space_len:(x+1)*each_space_len]
-            print "Spawning process to do %s" % str(space)
+            debug_print("Spawning process to do %s" % str(space))
             processes.append(Process(target=proxy_func, args=(self.tree.func, space, child_conn, self.tree.args)))
             processes[x].start()
 
